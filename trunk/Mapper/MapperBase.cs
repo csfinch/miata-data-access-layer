@@ -61,34 +61,17 @@ namespace Miata.Library.Mappers
 
 		protected MapperBase()
 		{
+			// Load and cache the value mappers (classes which inherit IValueMapper)
+			LoadAndCacheValueMappers();
+
 			// Get the properties for the type
 			PropertyInfo[] typeProperties = GenericType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
 			// Loop through each one and add it to the cache if required
 			foreach (PropertyInfo item in typeProperties)
 			{
-				// Search the GenericTypePropertyCache for the property Name of the generic type parameter
-				if (!GenericTypePropertyCache.ContainsKey(item.Name))
-				{
-					// If it does not exist, lock the cache and add the property
-					lock (GenericTypePropertyCache)
-					{
-						// Add the property to the cache with the name as the key
-						GenericTypePropertyCache.Add(item.Name, item);
-					}
-				}
-
-				// Search the GenericTypeSetDelegateCache for the property Name of the generic type parameter
-				if (!GenericTypeSetDelegateCache.ContainsKey(item.Name))
-				{
-					// If it does not exist, lock the cache and add the property
-					lock (GenericTypeSetDelegateCache)
-					{
-						// Add the property to the cache with the name as the key
-						// and create a set method delegate "setter"
-						GenericTypeSetDelegateCache.Add(item.Name, CreateSetMethod(item));
-					}
-				}
+				CacheGenericTypeProperty(item);
+				CacheGenericTypeSetterDelegate(item);
 			}
 
 			// Get the properties of the mapper
@@ -152,7 +135,9 @@ namespace Miata.Library.Mappers
 					throw e;
 				}
 			}
+		}
 
+		private void LoadAndCacheValueMappers() {
 			try
 			{
 				// Check to see how many values are stored in the value mappers cache
@@ -199,6 +184,32 @@ namespace Miata.Library.Mappers
 			{
 				log.Error(e.Message, e);
 				throw e;
+			}
+		}
+
+		private void CacheGenericTypeProperty(PropertyInfo typeProperty) {
+			// Search the GenericTypePropertyCache for the property Name of the generic type parameter
+			if (!GenericTypePropertyCache.ContainsKey(typeProperty.Name))
+			{
+				// If it does not exist, lock the cache and add the property
+				lock (GenericTypePropertyCache)
+				{
+					// Add the property to the cache with the name as the key
+					GenericTypePropertyCache.Add(typeProperty.Name, typeProperty);
+				}
+			}
+		}
+
+		private void CacheGenericTypeSetterDelegate(PropertyInfo typeProperty) {
+			if (!GenericTypeSetDelegateCache.ContainsKey(typeProperty.Name))
+			{
+				// If it does not exist, lock the cache and add the property
+				lock (GenericTypeSetDelegateCache)
+				{
+					// Add the property to the cache with the name as the key
+					// and create a set method delegate "setter"
+					GenericTypeSetDelegateCache.Add(typeProperty.Name, CreateSetMethod(typeProperty));
+				}
 			}
 		}
 
