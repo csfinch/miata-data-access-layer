@@ -1,4 +1,4 @@
-namespace hansen.Library.Mappers
+namespace Miata.Library.Mappers
 {
 	public interface IMapperBase
 	{
