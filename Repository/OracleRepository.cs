@@ -1,0 +1,120 @@
+﻿using System.Configuration;
+using System.Data;
+using Oracle.DataAccess.Client;
+using System.Dynamic;
+using System.Collections.Generic;
+using System;
+using Oracle.DataAccess.Types;
+using Miata.Library.Translator;
+using log4net;
+using Miata.Library.Factory;
+
+namespace Miata.Library.Repository
+{
+	public abstract class OracleRepository<T> : AbstractRepository<T>
+	{
+		// Logging instance
+		private static readonly ILog log = LogManager.GetLogger(typeof(OracleRepository<T>));
+
+		private string dataSourceName = ConfigurationManager.AppSettings["db.connection.name"].ToString();
+
+		public override IDbConnection GetConnection()
+		{
+			if (null == this.DbConnection)
+			{
+				string connectionString = ConfigurationManager.ConnectionStrings[dataSourceName].ConnectionString;
+				this.DbConnection = new OracleConnection(connectionString);
+			}
+			return this.DbConnection;
+		}
+
+		protected IEnumerable<TRowType> ProcessRefCursor<TRowType>(OracleRefCursor cursor)
+		{
+			IEnumerable<TRowType> results = null;
+			try
+			{
+				OracleDataReader reader = (OracleDataReader)cursor.GetDataReader();
+				try
+				{
+					BaseTranslator<TRowType> oTranslator = new BaseTranslator<TRowType>();
+					results = oTranslator.ParseReader(reader);
+				}
+				catch (Exception e)
+				{
+					log.Error(e.Message, e);
+					throw e;
+				}
+				finally
+				{
+					if (reader != null)
+					{
+						reader.Close();
+					}
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+			return results;
+		}
+
+		protected IEnumerable<TRowType> ProcessReader<TRowType>(IDataReader reader)
+		{
+			IEnumerable<TRowType> results = null;
+			try
+			{
+				BaseTranslator<TRowType> oTranslator = new BaseTranslator<TRowType>();
+				results = oTranslator.ParseReader(reader);
+			}
+			catch (Exception e)
+			{
+				log.Error(e.Message, e);
+				throw e;
+			}
+			finally
+			{
+				if (reader != null)
+				{
+					reader.Close();
+				}
+			}
+			return results;
+		}
+
+		protected dynamic ProcessOutputParameters<TRowType>(OracleCommand cmd)
+		{
+			dynamic expando = new ExpandoObject();
+			var expandoDict = expando as IDictionary<String, object>;
+
+			List<OracleParameter> outParameters = new List<OracleParameter>();
+			foreach (OracleParameter p in cmd.Parameters)
+			{
+				if (!p.Direction.Equals(ParameterDirection.Input))
+				{
+					outParameters.Add(p);
+				}
+			}
+
+			foreach (var item in outParameters)
+			{
+				OracleParameter cmdParameter = cmd.Parameters[item.ParameterName];
+				OracleDbType cmdParameterType = cmdParameter.OracleDbType;
+				String cmdParameterName = cmdParameter.ParameterName;
+				if (OracleDbType.RefCursor.Equals(cmdParameterType))
+				{
+					using (OracleRefCursor cursor = (OracleRefCursor)cmdParameter.Value)
+					{
+						expandoDict[cmdParameterName] = this.ProcessRefCursor<TRowType>(cursor);
+					}
+				}
+				else
+				{
+					expandoDict[cmdParameterName] = cmdParameter.Value;
+				}
+			}
+
+			return expando;
+		}
+	}
+}
