@@ -16,6 +16,12 @@ namespace Miata.Library.Repository
 		// Logging instance
 		private static readonly ILog log = LogManager.GetLogger(typeof(AbstractRepository<T>));
 
+		private static Type OracleCommandType;
+
+		static AbstractRepository() {
+			OracleCommandType = Type.GetType("Oracle.DataAccess.Client.OracleCommand", false);
+		}
+
 		protected IDbConnection DbConnection { get; set; }
 
 		protected virtual string DebugSqlQuery(StringBuilder command, IEnumerable<IDataParameter> parameters)
@@ -65,7 +71,7 @@ namespace Miata.Library.Repository
 			command.CommandText = query;
 			command.CommandType = CommandType.Text;
 
-			if (command is OracleCommand)
+			if (null != OracleCommandType && command.GetType().Equals(OracleCommandType))
 			{
 				PropertyInfo bindByNameProperty = command.GetType().GetProperty("BindByName");
 				MethodInfo bindByNameMethod = bindByNameProperty.GetSetMethod();
