@@ -82,6 +82,41 @@ namespace Miata.Library.Repository
 			return results;
 		}
 
+		protected dynamic ProcessOutputParameters(OracleCommand cmd)
+		{
+			dynamic expando = new ExpandoObject();
+			var expandoDict = expando as IDictionary<String, object>;
+
+			List<OracleParameter> outParameters = new List<OracleParameter>();
+			foreach (OracleParameter p in cmd.Parameters)
+			{
+				if (!p.Direction.Equals(ParameterDirection.Input))
+				{
+					outParameters.Add(p);
+				}
+			}
+
+			foreach (var item in outParameters)
+			{
+				OracleParameter cmdParameter = cmd.Parameters[item.ParameterName];
+				OracleDbType cmdParameterType = cmdParameter.OracleDbType;
+				String cmdParameterName = cmdParameter.ParameterName;
+				if (OracleDbType.RefCursor.Equals(cmdParameterType))
+				{
+					using (OracleRefCursor cursor = (OracleRefCursor)cmdParameter.Value)
+					{
+						log.WarnFormat("REF CURSORS are not supported by this method.  Use ProcessOutputParameters<TRowType>(OracleCommand cmd) instead to retrieve the value of {0}", cmdParameterName);
+					}
+				}
+				else
+				{
+					expandoDict[cmdParameterName] = cmdParameter.Value;
+				}
+			}
+
+			return expando;
+		}
+
 		protected dynamic ProcessOutputParameters<TRowType>(OracleCommand cmd)
 		{
 			dynamic expando = new ExpandoObject();
