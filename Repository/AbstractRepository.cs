@@ -34,13 +34,21 @@ namespace Miata.Library.Repository
 			String debugQueryString = command;
 			foreach (IDataParameter p in parameters)
 			{
-				if (p.DbType == DbType.AnsiString)
+				bool isInput = (p.Direction == ParameterDirection.Input);
+				bool isInputOutput = (p.Direction == ParameterDirection.InputOutput);
+				bool isOutput = (p.Direction == ParameterDirection.Output);
+
+				if ((isInput || isInputOutput) && p.DbType == DbType.AnsiString)
 				{
-					debugQueryString = debugQueryString.Replace(":" + p.ParameterName, (null == p.Value ? "NULL" : "'" + p.Value.ToString() + "'"));
+					debugQueryString = debugQueryString.Replace(":" + p.ParameterName, ((null == p.Value || DBNull.Value == p.Value) ? "NULL" : "'" + p.Value.ToString() + "'"));
+				}
+				else if (isOutput)
+				{
+					// don't do anything, messy
 				}
 				else
 				{
-					debugQueryString = debugQueryString.Replace(":" + p.ParameterName, (null == p.Value ? "NULL" : p.Value.ToString()));
+					debugQueryString = debugQueryString.Replace(":" + p.ParameterName, ((null == p.Value || DBNull.Value == p.Value) ? "NULL" : p.Value.ToString()));
 				}
 
 			}

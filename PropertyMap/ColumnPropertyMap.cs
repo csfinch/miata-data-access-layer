@@ -30,6 +30,8 @@ namespace Miata.Library.PropertyMap
 
 		public GenericSetter SetMethod { get; set; }
 
+		public bool SQLExists { get; set; }
+
 		public ColumnPropertyMap(PropertyInfo property)
 		{
 			if (property == null)
@@ -44,6 +46,7 @@ namespace Miata.Library.PropertyMap
 			this.ObjectPropertyType = property.PropertyType;
 			this.GetMethod = this.CreateGetMethod();
 			this.SetMethod = this.CreateSetMethod();
+			this.SQLExists = false;
 		}
 
 		///
