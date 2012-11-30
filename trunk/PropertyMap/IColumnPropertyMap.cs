@@ -35,5 +35,10 @@ namespace Miata.Library.PropertyMap
 		/// Target POCO Property
 		/// </summary>
 		PropertyInfo Property { get; set; }
+
+		/// <summary>
+		/// Whether or not the property exists in the SQL Result
+		/// </summary>
+		bool SQLExists { get; set; }
 	}
 }

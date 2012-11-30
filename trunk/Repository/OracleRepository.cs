@@ -114,6 +114,8 @@ namespace Miata.Library.Repository
 				}
 			}
 
+			this.DbConnection.Close();
+
 			return expando;
 		}
 

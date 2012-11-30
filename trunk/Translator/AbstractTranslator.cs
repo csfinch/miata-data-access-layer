@@ -39,7 +39,15 @@ namespace Miata.Library.Translator
 			this.SetColumnNumbers(reader);
 			while (reader.Read())
 			{
-				results.Add(this.ParseRow(reader));
+				try
+				{
+					results.Add(this.ParseRow(reader));
+				}
+				catch (Exception e)
+				{
+					log.Warn(e.Message, e);
+					throw e;
+				}
 			}
 			return results;
 		}
@@ -52,7 +60,7 @@ namespace Miata.Library.Translator
 		public virtual T ParseRow(IDataRecord record)
 		{
 			T newObject = ObjectFactory<T>.CreateObject();
-			foreach (ColumnPropertyMap item in this.ColumnPropertyMapList)
+			foreach (ColumnPropertyMap item in this.ColumnPropertyMapList.Where(cmp => cmp.SQLExists))
 			{
 				int columnOrdinal = item.ColumnOrdinal;
 				Type objectPropertyType = item.ObjectPropertyType;
@@ -61,16 +69,29 @@ namespace Miata.Library.Translator
 				bool isDBNull = record.IsDBNull(columnOrdinal);
 				bool isEnum = objectPropertyType.IsEnum;
 				bool isNullable = (objectPropertyType.IsGenericType && objectPropertyType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)));
-
+				
 				if (!isDBNull && !isEnum && !isNullable)
 				{
-					if (log.IsDebugEnabled)
+					try
 					{
-						log.DebugFormat("Converting column {0}({1}) to {2}({3})", columnOrdinal, record.GetValue(columnOrdinal), item.ColumnName, objectPropertyType.Name);
+						if (log.IsDebugEnabled)
+						{
+							log.DebugFormat("Converting column {0}({1}) to {2}({3})", columnOrdinal, record.GetValue(columnOrdinal), item.ColumnName, objectPropertyType.Name);
+						}
+						var columnValue = Convert.ChangeType(record.GetValue(columnOrdinal), objectPropertyType);
+						setMethod(newObject, columnValue);
 					}
-
-					var columnValue = Convert.ChangeType(record.GetValue(columnOrdinal), objectPropertyType);
-					setMethod(newObject, columnValue);
+					catch (InvalidCastException e)
+					{
+						log.WarnFormat("Error converting column {0}({1}) to {2}({3})", columnOrdinal, record.GetValue(columnOrdinal), item.ColumnName, objectPropertyType.Name);
+						log.Warn(e.Message, e);
+					}
+					catch (Exception e)
+					{
+						log.WarnFormat("Error converting column {0}({1}) to {2}({3})", columnOrdinal, record.GetValue(columnOrdinal), item.ColumnName, objectPropertyType.Name);
+						log.Warn(e.Message, e);
+						//throw;
+					}
 				}
 				else if (!isDBNull && !isEnum && isNullable)
 				{
@@ -171,6 +192,7 @@ namespace Miata.Library.Translator
 						//Console.WriteLine(columnName + " => " + myField["DataType"].ToString());
 						columnProperty.ColumnPropertyType = (Type)myField["DataType"];
 						columnProperty.ColumnOrdinal = Int32.Parse(myField["ColumnOrdinal"].ToString());
+						columnProperty.SQLExists = true;
 					}
 				}
 				catch (IndexOutOfRangeException)
@@ -179,7 +201,7 @@ namespace Miata.Library.Translator
 				}
 				catch (ArgumentNullException)
 				{
-					log.WarnFormat("There are not columns mapped in {0}", GenericType.Name);
+					log.WarnFormat("There are no columns mapped in {0}", GenericType.Name);
 				}
 				catch (InvalidOperationException)
 				{
