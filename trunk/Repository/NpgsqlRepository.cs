@@ -8,6 +8,7 @@ using Miata.Library.Repository;
 using Miata.Library.Translator;
 using Npgsql;
 using NpgsqlTypes;
+using MiataDataAccessLayer.Translator;
 
 /*
  * Install-Package Npgsql
@@ -69,7 +70,7 @@ namespace Miata.Library.Repository
 			IEnumerable<TRowType> results = null;
 			try
 			{
-				BaseTranslator<TRowType> oTranslator = new BaseTranslator<TRowType>();
+				NgpgsqlTranslator<TRowType> oTranslator = new NgpgsqlTranslator<TRowType>();
 				results = oTranslator.ParseReader(reader);
 			}
 			catch (Exception e)

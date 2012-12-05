@@ -184,6 +184,7 @@ namespace Miata.Library.Translator
 			foreach (DataRow myField in schemaTable.Rows)
 			{
 				String columnName = myField["ColumnName"].ToString().ToUpper();
+				log.DebugFormat("Found column: {0}", columnName);
 				try
 				{
 					IColumnPropertyMap columnProperty = this.ColumnPropertyMapList.Where(cmp => cmp.ColumnName.Equals(columnName)).SingleOrDefault();
@@ -193,6 +194,8 @@ namespace Miata.Library.Translator
 						columnProperty.ColumnPropertyType = (Type)myField["DataType"];
 						columnProperty.ColumnOrdinal = Int32.Parse(myField["ColumnOrdinal"].ToString());
 						columnProperty.SQLExists = true;
+
+						log.DebugFormat("Column: {0} ColumnOrdinal: {1} DataType: {2}", columnName, columnProperty.ColumnOrdinal, columnProperty.ColumnPropertyType.Name);
 					}
 				}
 				catch (IndexOutOfRangeException)
