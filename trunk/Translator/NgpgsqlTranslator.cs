@@ -36,6 +36,20 @@ namespace MiataDataAccessLayer.Translator
 			DataTable schemaTable = dbReader.GetSchemaTable();
 
 			//For each field in the table...
+			/*
+			 * Due to a ColumnOrdinal bug in the DataTable creation logic for NgpgsqlDataTable.GetSchemaTable(), we need to determine if there is an offset.
+			 * Currently Ngpgsql has an offset of + 1.
+			 */
+			int ordinalOffset = 0;
+			try
+			{
+				IEnumerable<DataRow> rows = schemaTable.Rows.Cast<DataRow>();
+				ordinalOffset = rows.Min(field => Int32.Parse(field["ColumnOrdinal"].ToString()));
+			}
+			catch (Exception ex)
+			{
+				log.Debug(ex.Message, ex);
+			}
 			foreach (DataRow myField in schemaTable.Rows)
 			{
 				String columnName = myField["ColumnName"].ToString().ToUpper();
@@ -48,7 +62,7 @@ namespace MiataDataAccessLayer.Translator
 						//Console.WriteLine(columnName + " => " + myField["DataType"].ToString());
 						columnProperty.ColumnPropertyType = (Type)myField["DataType"];
 						// Thanks to a bug in Ngpgsql...
-						columnProperty.ColumnOrdinal = Int32.Parse(myField["ColumnOrdinal"].ToString()) -1;
+						columnProperty.ColumnOrdinal = Int32.Parse(myField["ColumnOrdinal"].ToString()) - ordinalOffset;
 						columnProperty.SQLExists = true;
 
 						log.DebugFormat("Column: {0} ColumnOrdinal: {1} DataType: {2}", columnName, columnProperty.ColumnOrdinal, columnProperty.ColumnPropertyType.Name);
