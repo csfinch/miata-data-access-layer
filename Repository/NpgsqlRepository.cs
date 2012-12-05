@@ -12,31 +12,61 @@ using NpgsqlTypes;
 /*
  * Install-Package Npgsql
  */
-
-public abstract class NpgsqlRepository<T> : AbstractRepository<T>
+namespace Miata.Library.Repository
 {
-	// Logging instance
-	private static readonly ILog log = LogManager.GetLogger(typeof(NpgsqlRepository<T>));
-
-	private string dataSourceName = ConfigurationManager.AppSettings["db.connection.name"].ToString();
-
-	public override IDbConnection GetConnection()
+	public abstract class NpgsqlRepository<T> : AbstractRepository<T>
 	{
-		if (null == this.DbConnection)
+		// Logging instance
+		private static readonly ILog log = LogManager.GetLogger(typeof(NpgsqlRepository<T>));
+
+		private string dataSourceName = ConfigurationManager.AppSettings["db.connection.name"].ToString();
+
+		public override IDbConnection GetConnection()
 		{
-			string connectionString = ConfigurationManager.ConnectionStrings[dataSourceName].ConnectionString;
-			this.DbConnection = new NpgsqlConnection(connectionString);
+			if (null == this.DbConnection)
+			{
+				string connectionString = ConfigurationManager.ConnectionStrings[dataSourceName].ConnectionString;
+				this.DbConnection = new NpgsqlConnection(connectionString);
+			}
+			return this.DbConnection;
 		}
-		return this.DbConnection;
-	}
 
-	/*
-	protected IEnumerable<TRowType> ProcessRefCursor<TRowType>(OracleRefCursor cursor)
-	{
-		IEnumerable<TRowType> results = null;
-		try
+		/*
+		protected IEnumerable<TRowType> ProcessRefCursor<TRowType>(OracleRefCursor cursor)
 		{
-			NpgsqlDataReader reader = (NpgsqlDataReader)cursor.GetDataReader();
+			IEnumerable<TRowType> results = null;
+			try
+			{
+				NpgsqlDataReader reader = (NpgsqlDataReader)cursor.GetDataReader();
+				try
+				{
+					BaseTranslator<TRowType> oTranslator = new BaseTranslator<TRowType>();
+					results = oTranslator.ParseReader(reader);
+				}
+				catch (Exception e)
+				{
+					log.Error(e.Message, e);
+					throw e;
+				}
+				finally
+				{
+					if (reader != null)
+					{
+						reader.Close();
+					}
+				}
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+			return results;
+		}
+		*/
+
+		protected IEnumerable<TRowType> ProcessReader<TRowType>(IDataReader reader)
+		{
+			IEnumerable<TRowType> results = null;
 			try
 			{
 				BaseTranslator<TRowType> oTranslator = new BaseTranslator<TRowType>();
@@ -54,107 +84,79 @@ public abstract class NpgsqlRepository<T> : AbstractRepository<T>
 					reader.Close();
 				}
 			}
+			return results;
 		}
-		catch (Exception)
-		{
-			throw;
-		}
-		return results;
-	}
-	*/
 
-	protected IEnumerable<TRowType> ProcessReader<TRowType>(IDataReader reader)
-	{
-		IEnumerable<TRowType> results = null;
-		try
+		protected dynamic ProcessOutputParameters(NpgsqlCommand cmd)
 		{
-			BaseTranslator<TRowType> oTranslator = new BaseTranslator<TRowType>();
-			results = oTranslator.ParseReader(reader);
-		}
-		catch (Exception e)
-		{
-			log.Error(e.Message, e);
-			throw e;
-		}
-		finally
-		{
-			if (reader != null)
+			dynamic expando = new ExpandoObject();
+			var expandoDict = expando as IDictionary<String, object>;
+
+			List<NpgsqlParameter> outParameters = new List<NpgsqlParameter>();
+			foreach (NpgsqlParameter p in cmd.Parameters)
 			{
-				reader.Close();
-			}
-		}
-		return results;
-	}
-
-	protected dynamic ProcessOutputParameters(NpgsqlCommand cmd)
-	{
-		dynamic expando = new ExpandoObject();
-		var expandoDict = expando as IDictionary<String, object>;
-
-		List<NpgsqlParameter> outParameters = new List<NpgsqlParameter>();
-		foreach (NpgsqlParameter p in cmd.Parameters)
-		{
-			if (!p.Direction.Equals(ParameterDirection.Input))
-			{
-				outParameters.Add(p);
-			}
-		}
-
-		foreach (var item in outParameters)
-		{
-			NpgsqlParameter cmdParameter = cmd.Parameters[item.ParameterName];
-			NpgsqlDbType cmdParameterType = cmdParameter.NpgsqlDbType;
-			String cmdParameterName = cmdParameter.ParameterName;
-			if (NpgsqlDbType.Refcursor.Equals(cmdParameterType))
-			{
-				using (NpgsqlDataReader cursor = (NpgsqlDataReader)cmdParameter.Value)
+				if (!p.Direction.Equals(ParameterDirection.Input))
 				{
-					log.WarnFormat("REF CURSORS are not supported by this method.  Use ProcessOutputParameters<TRowType>(OracleCommand cmd) instead to retrieve the value of {0}", cmdParameterName);
+					outParameters.Add(p);
 				}
 			}
-			else
+
+			foreach (var item in outParameters)
 			{
-				expandoDict[cmdParameterName] = cmdParameter.Value;
-			}
-		}
-
-		this.DbConnection.Close();
-
-		return expando;
-	}
-
-	protected dynamic ProcessOutputParameters<TRowType>(NpgsqlCommand cmd)
-	{
-		dynamic expando = new ExpandoObject();
-		var expandoDict = expando as IDictionary<String, object>;
-
-		List<NpgsqlParameter> outParameters = new List<NpgsqlParameter>();
-		foreach (NpgsqlParameter p in cmd.Parameters)
-		{
-			if (!p.Direction.Equals(ParameterDirection.Input))
-			{
-				outParameters.Add(p);
-			}
-		}
-
-		foreach (var item in outParameters)
-		{
-			NpgsqlParameter cmdParameter = cmd.Parameters[item.ParameterName];
-			NpgsqlDbType cmdParameterType = cmdParameter.NpgsqlDbType;
-			String cmdParameterName = cmdParameter.ParameterName;
-			if (NpgsqlDbType.Refcursor.Equals(cmdParameterType))
-			{
-				using (NpgsqlDataReader cursor = (NpgsqlDataReader)cmdParameter.Value)
+				NpgsqlParameter cmdParameter = cmd.Parameters[item.ParameterName];
+				NpgsqlDbType cmdParameterType = cmdParameter.NpgsqlDbType;
+				String cmdParameterName = cmdParameter.ParameterName;
+				if (NpgsqlDbType.Refcursor.Equals(cmdParameterType))
 				{
-					expandoDict[cmdParameterName] = this.ProcessReader<TRowType>(cursor);
+					using (NpgsqlDataReader cursor = (NpgsqlDataReader)cmdParameter.Value)
+					{
+						log.WarnFormat("REF CURSORS are not supported by this method.  Use ProcessOutputParameters<TRowType>(OracleCommand cmd) instead to retrieve the value of {0}", cmdParameterName);
+					}
+				}
+				else
+				{
+					expandoDict[cmdParameterName] = cmdParameter.Value;
 				}
 			}
-			else
-			{
-				expandoDict[cmdParameterName] = cmdParameter.Value;
-			}
+
+			this.DbConnection.Close();
+
+			return expando;
 		}
 
-		return expando;
+		protected dynamic ProcessOutputParameters<TRowType>(NpgsqlCommand cmd)
+		{
+			dynamic expando = new ExpandoObject();
+			var expandoDict = expando as IDictionary<String, object>;
+
+			List<NpgsqlParameter> outParameters = new List<NpgsqlParameter>();
+			foreach (NpgsqlParameter p in cmd.Parameters)
+			{
+				if (!p.Direction.Equals(ParameterDirection.Input))
+				{
+					outParameters.Add(p);
+				}
+			}
+
+			foreach (var item in outParameters)
+			{
+				NpgsqlParameter cmdParameter = cmd.Parameters[item.ParameterName];
+				NpgsqlDbType cmdParameterType = cmdParameter.NpgsqlDbType;
+				String cmdParameterName = cmdParameter.ParameterName;
+				if (NpgsqlDbType.Refcursor.Equals(cmdParameterType))
+				{
+					using (NpgsqlDataReader cursor = (NpgsqlDataReader)cmdParameter.Value)
+					{
+						expandoDict[cmdParameterName] = this.ProcessReader<TRowType>(cursor);
+					}
+				}
+				else
+				{
+					expandoDict[cmdParameterName] = cmdParameter.Value;
+				}
+			}
+
+			return expando;
+		}
 	}
 }
