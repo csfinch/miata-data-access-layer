@@ -57,15 +57,15 @@ namespace Miata.Library.Repository
 			return debugQueryString;
 		}
 
-		public abstract IEnumerable<T> Get();
+		//public abstract IEnumerable<T> Get();
 
-		public abstract T Get(int id);
+		//public abstract T Get(int id);
 
-		public abstract T Add(T item);
+		//public abstract T Add(T item);
 
-		public abstract bool Update(T item);
+		//public abstract bool Update(T item);
 
-		public abstract void Delete(int id);
+		//public abstract void Delete(int id);
 
 		public abstract IDbConnection GetConnection();
 
