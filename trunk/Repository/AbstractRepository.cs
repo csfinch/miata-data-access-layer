@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Data;
-using System.Collections.ObjectModel;
-using Miata.Library.Factory;
-using log4net;
-using Oracle.DataAccess.Client;
 using System.Reflection;
+using System.Text;
+using log4net;
+using Miata.Library.Factory;
 
 namespace Miata.Library.Repository
 {
