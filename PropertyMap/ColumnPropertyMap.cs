@@ -5,6 +5,7 @@ using System.Text;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Data.Linq.Mapping;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Miata.Library.PropertyMap
 {
@@ -37,11 +38,17 @@ namespace Miata.Library.PropertyMap
 			if (property == null)
 				throw new ArgumentNullException("property");
 
-			if (property.IsDefined(typeof(ColumnAttribute), true))
+			if (property.IsDefined(typeof(System.Data.Linq.Mapping.ColumnAttribute), true))
 			{
-				ColumnAttribute column = (ColumnAttribute)property.GetCustomAttributes(typeof(ColumnAttribute), true)[0];
+				System.Data.Linq.Mapping.ColumnAttribute column = (System.Data.Linq.Mapping.ColumnAttribute)property.GetCustomAttributes(typeof(System.Data.Linq.Mapping.ColumnAttribute), true)[0];
 				this.ColumnName = column.Name.ToUpper();
 			}
+			else if (property.IsDefined(typeof(System.ComponentModel.DataAnnotations.Schema.ColumnAttribute), true))
+			{
+				System.ComponentModel.DataAnnotations.Schema.ColumnAttribute column = (System.ComponentModel.DataAnnotations.Schema.ColumnAttribute)property.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.Schema.ColumnAttribute), true)[0];
+				this.ColumnName = column.Name.ToUpper();
+			}
+
 			this.Property = property;
 			this.ObjectPropertyType = property.PropertyType;
 			this.GetMethod = this.CreateGetMethod();
