@@ -5,7 +5,6 @@ using System.Text;
 using log4net;
 using Miata.Library.PropertyMap;
 using System.Reflection;
-using System.Data.Linq.Mapping;
 using System.Data.Common;
 using System.Data;
 using Miata.Library.Factory;
@@ -225,7 +224,11 @@ namespace Miata.Library.Translator
 
 			foreach (PropertyInfo item in typeProperties)
 			{
-				if (item.IsDefined(typeof(ColumnAttribute), true))
+				if (item.IsDefined(typeof(System.Data.Linq.Mapping.ColumnAttribute), true))
+				{
+					ColumnPropertyMapList.Add(new ColumnPropertyMap(item));
+				}
+				else if (item.IsDefined(typeof(System.ComponentModel.DataAnnotations.Schema.ColumnAttribute), true))
 				{
 					ColumnPropertyMapList.Add(new ColumnPropertyMap(item));
 				}
