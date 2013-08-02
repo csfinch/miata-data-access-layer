@@ -13,13 +13,7 @@ namespace Miata.Library.Repository
 		// Logging instance
 		private static readonly ILog log = LogManager.GetLogger(typeof(AbstractRepository<T>));
 
-		private static Type OracleCommandType;
-		private static Type NpgsqlCommandType;
 
-		static AbstractRepository() {
-			OracleCommandType = Type.GetType("Oracle.DataAccess.Client.OracleCommand", false);
-			NpgsqlCommandType = Type.GetType("Npgsql.NpgsqlCommand", false);
-		}
 
 		protected IDbConnection DbConnection { get; set; }
 
@@ -74,21 +68,31 @@ namespace Miata.Library.Repository
 		protected virtual TCom CreateCommand<TCom>(IDbConnection connection, String query, IEnumerable<IDataParameter> parameters) where TCom : IDbCommand
 		{
 			TCom command = ObjectFactory<TCom>.CreateObject();
+			
+			if ("Oracle.DataAccess.Client.OracleCommand".Equals(typeof(TCom).FullName))
+			{
+				log.Info("Created an OracleCommand, attempting to set BindByName to True.");
+				try
+				{
+					if (null != command.GetType().GetProperty("BindByName"))
+					{
+						command.GetType().GetProperty("BindByName").SetValue(command, true, null);
+					}
+				}
+				catch (Exception ex)
+				{
+					log.Warn("Failed to locate BindByName for Oracle.DataAccess.Client.OracleCommand");
+					log.Debug(ex.Message, ex);
+				}
+			}
+			else
+			{
+				log.InfoFormat("Found: {0}", typeof(TCom));
+			}
+			 
 			command.Connection = connection;
 			command.CommandText = query;
 			command.CommandType = CommandType.Text;
-
-			if (null != OracleCommandType && command.GetType().Equals(OracleCommandType))
-			{
-				PropertyInfo bindByNameProperty = command.GetType().GetProperty("BindByName");
-				MethodInfo bindByNameMethod = bindByNameProperty.GetSetMethod();
-				bindByNameMethod.Invoke(command, new Object[] { true });
-			}
-
-			if (null != NpgsqlCommandType && command.GetType().Equals(NpgsqlCommandType))
-			{
-
-			}
 			
 			foreach (IDataParameter p in parameters)
 			{
