@@ -112,7 +112,21 @@ namespace Miata.Library.Translator
 				}
 				else if (isDBNull && isNullable)
 				{
-					setMethod(newObject, null);
+						if (objectPropertyType.Equals(typeof(string)))
+						{
+								setMethod(newObject, "");
+						}
+						else
+						{
+								setMethod(newObject, null);
+						}
+				}
+				else if (isDBNull)
+				{
+						if (objectPropertyType.Equals(typeof(string)))
+						{
+								setMethod(newObject, "");
+						}
 				}
 			}
 			return newObject;
