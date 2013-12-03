@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using System.Text;
-using log4net;
 using Miata.Library.Factory;
+using Common.Logging;
 
 namespace Miata.Library.Repository
 {

@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using log4net;
-using Miata.Library.PropertyMap;
-using System.Reflection;
-using System.Data.Linq.Mapping;
+﻿using Common.Logging;
 using System.Data.Common;
-using System.Data;
 
 namespace Miata.Library.Translator
 {

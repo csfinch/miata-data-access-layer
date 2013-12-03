@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Miata.Library.Translator;
-using log4net;
 using System.Data.Common;
 using System.Data;
 using Miata.Library.PropertyMap;
+using Common.Logging;
 
 namespace MiataDataAccessLayer.Translator
 {

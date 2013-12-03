@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using log4net;
-using Miata.Library.PropertyMap;
-using System.Reflection;
-using System.Data.Common;
-using System.Data;
+﻿using Common.Logging;
 using Miata.Library.Factory;
+using Miata.Library.PropertyMap;
 using Miata.Library.Utils;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Reflection;
 
 namespace Miata.Library.Translator
 {
