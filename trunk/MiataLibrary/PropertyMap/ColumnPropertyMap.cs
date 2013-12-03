@@ -17,26 +17,55 @@ namespace Miata.Library.PropertyMap
 
 	public class ColumnPropertyMap : IColumnPropertyMap
 	{
-		public int ColumnOrdinal { get; set; }
+		/// <summary>
+        /// Ordinal position (column number) of this property within the Result Set
+        /// </summary>
+        public int ColumnOrdinal { get; set; }
 
+        /// <summary>
+        /// Name of the column name of the property within the Result Set
+        /// </summary>
 		public string ColumnName { get; set; }
 
+        /// <summary>
+        /// Result Set column property type
+        /// </summary>
 		public Type ColumnPropertyType { get; set; }
 
+        /// <summary>
+        /// Object property type
+        /// </summary>
 		public Type ObjectPropertyType { get; set; }
 
+        /// <summary>
+        /// The PropertyInfo for the mapped property
+        /// </summary>
 		public PropertyInfo Property { get; set; }
 
-		public GenericGetter GetMethod { get; set; }
+		/// <summary>
+		/// Compiled MSIL getter for the mapped property
+		/// </summary>
+        public GenericGetter GetMethod { get; set; }
 
-		public GenericSetter SetMethod { get; set; }
+		/// <summary>
+		/// Compiled MSIL setter for the mapped property
+		/// </summary>
+        public GenericSetter SetMethod { get; set; }
 
-		public bool SQLExists { get; set; }
+		/// <summary>
+		/// Whether or not the property/column was found in the ResultSet
+		/// </summary>
+        public bool SQLExists { get; set; }
 
-		public ColumnPropertyMap(PropertyInfo property)
+		/// <summary>
+		/// Create a new map based on the PropertyInfo provided
+		/// </summary>
+		/// <param name="property">The object property to create a map for</param>
+        /// <exception cref="ArgumentNullException">Thrown when the supplied property is null</exception>
+        public ColumnPropertyMap(PropertyInfo property)
 		{
 			if (property == null)
-				throw new ArgumentNullException("property");
+				throw new ArgumentNullException("The property provided was null");
 
 			if (property.IsDefined(typeof(System.Data.Linq.Mapping.ColumnAttribute), true))
 			{
@@ -56,10 +85,11 @@ namespace Miata.Library.PropertyMap
 			this.SQLExists = false;
 		}
 
-		///
-		/// Creates a dynamic setter for the property
-		///
-		private GenericSetter CreateSetMethod()
+		/// <summary>
+        /// Creates a dynamic setter for the property
+		/// </summary>
+        /// <returns>Compiled MSIL setter for the mapped property or null is no Set method is found</returns>
+        private GenericSetter CreateSetMethod()
 		{
 			PropertyInfo propertyInfo = this.Property;
 			/*
@@ -99,9 +129,10 @@ namespace Miata.Library.PropertyMap
 			return (GenericSetter)setter.CreateDelegate(typeof(GenericSetter));
 		}
 
-		///
-		/// Creates a dynamic getter for the property
-		///
+		/// <summary>
+        /// Creates a dynamic getter for the property
+        /// </summary>
+        /// <returns>Compiled MSIL getter for the mapped property or null is no Get method is found</returns>
 		private GenericGetter CreateGetMethod()
 		{
 			PropertyInfo propertyInfo = this.Property;
