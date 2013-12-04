@@ -1,4 +1,5 @@
 ﻿using Common.Logging;
+using Miata.Library.Factory;
 using Miata.Library.Repository;
 using Miata.Library.Translator;
 using System;
@@ -24,6 +25,39 @@ namespace MiataLibrary.Oracle
                 this.DbConnection = new OracleConnection(connectionString);
             }
             return this.DbConnection;
+        }
+
+        protected override TCom CreateCommand<TCom>(IDbConnection connection, String query, IEnumerable<IDataParameter> parameters) where TCom : IDbCommand
+        {
+            TCom command = ObjectFactory<TCom>.CreateObject();
+
+            if (OracleCommand.Equals(typeof(TCom)))
+            {
+                log.Info("Created an OracleCommand, attempting to set BindByName to True.");
+                try
+                {
+                    command.BindByName = true;
+                }
+                catch (Exception ex)
+                {
+                    log.Warn("Failed to locate BindByName for Oracle.DataAccess.Client.OracleCommand");
+                    log.Debug(ex.Message, ex);
+                }
+            }
+            else
+            {
+                log.InfoFormat("Found: {0}", typeof(TCom));
+            }
+
+            command.Connection = connection;
+            command.CommandText = query;
+            command.CommandType = CommandType.Text;
+
+            foreach (IDataParameter p in parameters)
+            {
+                command.Parameters.Add(p);
+            }
+            return command;
         }
 
         protected IEnumerable<TRowType> ProcessRefCursor<TRowType>(OracleRefCursor cursor)
