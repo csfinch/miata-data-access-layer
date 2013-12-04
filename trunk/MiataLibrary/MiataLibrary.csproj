@@ -56,7 +56,6 @@
     <Compile Include="Translator\AbstractTranslator.cs" />
     <Compile Include="Translator\BaseTranslator.cs" />
     <Compile Include="Translator\ITranslator.cs" />
-    <Compile Include="Translator\NgpgsqlTranslator.cs" />
     <Compile Include="Utils\EnumUtils.cs" />
     <Compile Include="Utils\ObjectHelper.cs" />
   </ItemGroup>

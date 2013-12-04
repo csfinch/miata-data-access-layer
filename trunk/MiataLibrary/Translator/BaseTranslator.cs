@@ -6,7 +6,7 @@ namespace Miata.Library.Translator
 	public class BaseTranslator<T> : AbstractTranslator<T>
 	{
 		// Logging instance
-		private static readonly ILog log = LogManager.GetLogger(typeof(BaseTranslator<T>));
+		private readonly ILog log = LogManager.GetLogger(typeof(BaseTranslator<T>));
 
 		public BaseTranslator()
 		{

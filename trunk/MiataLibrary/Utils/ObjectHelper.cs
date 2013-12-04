@@ -10,12 +10,11 @@ namespace Miata.Library.Utils
     public static class ObjectHelper
     {
 
-        private static List<Type> UpCastApprovedTypes
+        private static HashSet<Type> UpCastApprovedTypes
         {
             get
             {
-                List<Type> _approvedTypes = new List<Type>();
-                _approvedTypes = new List<Type>();
+                var _approvedTypes = new HashSet<Type>();
 
                 _approvedTypes.Add(typeof(short));
                 _approvedTypes.Add(typeof(int));
@@ -73,10 +72,10 @@ namespace Miata.Library.Utils
         public static T UpCast<T>(this object baseObject, params string[] excludeProps)
         {
             var sourceType = baseObject.GetType();
-            Type derivedType = typeof(T);
+            var derivedType = typeof(T);
             var result = ObjectFactory<T>.CreateObject();
 
-            foreach (PropertyInfo sourceProperty in sourceType.GetProperties())
+            foreach (var sourceProperty in sourceType.GetProperties())
             {
                 //Skip if in the exclude list
                 if (excludeProps.Contains(sourceProperty.Name) != true && UpCastApprovedTypes.Contains(sourceProperty.PropertyType))
