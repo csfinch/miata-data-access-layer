@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
@@ -13,8 +14,6 @@ namespace Miata.Library.Repository
 		// Logging instance
 		private static readonly ILog log = LogManager.GetLogger(typeof(AbstractRepository<T>));
 
-
-
 		protected IDbConnection DbConnection { get; set; }
 
 		protected virtual string DebugSqlQuery(StringBuilder command, IEnumerable<IDataParameter> parameters)
@@ -24,39 +23,23 @@ namespace Miata.Library.Repository
 
 		protected virtual string DebugSqlQuery(String command, IEnumerable<IDataParameter> parameters)
 		{
-			String debugQueryString = command;
-			foreach (IDataParameter p in parameters)
+			var debugQueryString = command;
+            foreach (var p in parameters.Where(p => p.Direction == ParameterDirection.Input || p.Direction == ParameterDirection.InputOutput))
 			{
-				bool isInput = (p.Direction == ParameterDirection.Input);
-				bool isInputOutput = (p.Direction == ParameterDirection.InputOutput);
-				bool isOutput = (p.Direction == ParameterDirection.Output);
-
-				if ((isInput || isInputOutput) && p.DbType == DbType.AnsiString)
+				var parameterNameMarker = String.Format(":{0}", p.ParameterName);
+                var stringValue = string.Empty;
+                if (p.DbType == DbType.AnsiString)
 				{
-					debugQueryString = debugQueryString.Replace(":" + p.ParameterName, ((null == p.Value || DBNull.Value == p.Value) ? "NULL" : "'" + p.Value.ToString() + "'"));
-				}
-				else if (isOutput)
-				{
-					// don't do anything, messy
+                    stringValue = (null == p.Value || DBNull.Value == p.Value) ? "NULL" : String.Format("'{0}'", p.Value.ToString());
 				}
 				else
 				{
-					debugQueryString = debugQueryString.Replace(":" + p.ParameterName, ((null == p.Value || DBNull.Value == p.Value) ? "NULL" : p.Value.ToString()));
+                    stringValue = (null == p.Value || DBNull.Value == p.Value) ? "NULL" : p.Value.ToString();
 				}
-
+                debugQueryString = debugQueryString.Replace(parameterNameMarker, stringValue);
 			}
 			return debugQueryString;
 		}
-
-		//public abstract IEnumerable<T> Get();
-
-		//public abstract T Get(int id);
-
-		//public abstract T Add(T item);
-
-		//public abstract bool Update(T item);
-
-		//public abstract void Delete(int id);
 
 		public abstract IDbConnection GetConnection();
 
@@ -69,26 +52,7 @@ namespace Miata.Library.Repository
 		{
 			TCom command = ObjectFactory<TCom>.CreateObject();
 			
-			if ("Oracle.DataAccess.Client.OracleCommand".Equals(typeof(TCom).FullName))
-			{
-				log.Info("Created an OracleCommand, attempting to set BindByName to True.");
-				try
-				{
-					if (null != command.GetType().GetProperty("BindByName"))
-					{
-						command.GetType().GetProperty("BindByName").SetValue(command, true, null);
-					}
-				}
-				catch (Exception ex)
-				{
-					log.Warn("Failed to locate BindByName for Oracle.DataAccess.Client.OracleCommand");
-					log.Debug(ex.Message, ex);
-				}
-			}
-			else
-			{
-				log.InfoFormat("Found: {0}", typeof(TCom));
-			}
+			log.InfoFormat("Creating Command of Type: {0}", typeof(TCom));
 			 
 			command.Connection = connection;
 			command.CommandText = query;
