@@ -56,6 +56,7 @@
   <ItemGroup>
     <Compile Include="NpgsqlRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Translator\NgpgsqlTranslator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

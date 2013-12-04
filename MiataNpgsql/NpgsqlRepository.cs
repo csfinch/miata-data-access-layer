@@ -1,6 +1,6 @@
 ﻿using Common.Logging;
 using Miata.Library.Repository;
-using MiataDataAccessLayer.Translator;
+using MiataLibrary.Npgsql.Translator;
 using Npgsql;
 using NpgsqlTypes;
 using System;
@@ -36,7 +36,7 @@ namespace MiataLibrary.Npgsql
             IEnumerable<TRowType> results = null;
             try
             {
-                NgpgsqlTranslator<TRowType> oTranslator = new NgpgsqlTranslator<TRowType>();
+                var oTranslator = new NgpgsqlTranslator<TRowType>();
                 results = oTranslator.ParseReader(reader);
             }
             catch (Exception e)
@@ -59,7 +59,7 @@ namespace MiataLibrary.Npgsql
             dynamic expando = new ExpandoObject();
             var expandoDict = expando as IDictionary<String, object>;
 
-            List<NpgsqlParameter> outParameters = new List<NpgsqlParameter>();
+            var outParameters = new HashSet<NpgsqlParameter>();
             foreach (NpgsqlParameter p in cmd.Parameters)
             {
                 if (!p.Direction.Equals(ParameterDirection.Input))
@@ -70,9 +70,9 @@ namespace MiataLibrary.Npgsql
 
             foreach (var item in outParameters)
             {
-                NpgsqlParameter cmdParameter = cmd.Parameters[item.ParameterName];
-                NpgsqlDbType cmdParameterType = cmdParameter.NpgsqlDbType;
-                String cmdParameterName = cmdParameter.ParameterName;
+                var cmdParameter = cmd.Parameters[item.ParameterName];
+                var cmdParameterType = cmdParameter.NpgsqlDbType;
+                var cmdParameterName = cmdParameter.ParameterName;
                 if (NpgsqlDbType.Refcursor.Equals(cmdParameterType))
                 {
                     using (NpgsqlDataReader cursor = (NpgsqlDataReader)cmdParameter.Value)
@@ -96,7 +96,7 @@ namespace MiataLibrary.Npgsql
             dynamic expando = new ExpandoObject();
             var expandoDict = expando as IDictionary<String, object>;
 
-            List<NpgsqlParameter> outParameters = new List<NpgsqlParameter>();
+            var outParameters = new HashSet<NpgsqlParameter>();
             foreach (NpgsqlParameter p in cmd.Parameters)
             {
                 if (!p.Direction.Equals(ParameterDirection.Input))
@@ -107,9 +107,9 @@ namespace MiataLibrary.Npgsql
 
             foreach (var item in outParameters)
             {
-                NpgsqlParameter cmdParameter = cmd.Parameters[item.ParameterName];
-                NpgsqlDbType cmdParameterType = cmdParameter.NpgsqlDbType;
-                String cmdParameterName = cmdParameter.ParameterName;
+                var cmdParameter = cmd.Parameters[item.ParameterName];
+                var cmdParameterType = cmdParameter.NpgsqlDbType;
+                var cmdParameterName = cmdParameter.ParameterName;
                 if (NpgsqlDbType.Refcursor.Equals(cmdParameterType))
                 {
                     using (NpgsqlDataReader cursor = (NpgsqlDataReader)cmdParameter.Value)

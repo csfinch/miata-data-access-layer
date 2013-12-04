@@ -2,6 +2,8 @@
 using Miata.Library.Factory;
 using Miata.Library.Repository;
 using Miata.Library.Translator;
+using Oracle.DataAccess.Client;
+using Oracle.DataAccess.Types;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -21,22 +23,27 @@ namespace MiataLibrary.Oracle
         {
             if (null == this.DbConnection)
             {
-                string connectionString = ConfigurationManager.ConnectionStrings[dataSourceName].ConnectionString;
+                var connectionString = ConfigurationManager.ConnectionStrings[dataSourceName].ConnectionString;
                 this.DbConnection = new OracleConnection(connectionString);
             }
             return this.DbConnection;
         }
 
-        protected override TCom CreateCommand<TCom>(IDbConnection connection, String query, IEnumerable<IDataParameter> parameters) where TCom : IDbCommand
+        protected override OracleCommand CreateCommand<OracleCommand>(IDbConnection connection, String query, IEnumerable<IDataParameter> parameters)
         {
-            TCom command = ObjectFactory<TCom>.CreateObject();
+            var commandType = typeof(OracleCommand);
+            var command = ObjectFactory<OracleCommand>.CreateObject();
 
-            if (OracleCommand.Equals(typeof(TCom)))
+            if (commandType is OracleCommand)
             {
                 log.Info("Created an OracleCommand, attempting to set BindByName to True.");
                 try
                 {
-                    command.BindByName = true;
+                    var bindByNameProperty = commandType.GetProperty("BindByName");
+                    if (null != bindByNameProperty)
+					{
+						bindByNameProperty.SetValue(command, true, null);
+					}
                 }
                 catch (Exception ex)
                 {
@@ -46,14 +53,14 @@ namespace MiataLibrary.Oracle
             }
             else
             {
-                log.InfoFormat("Found: {0}", typeof(TCom));
+                log.InfoFormat("Found: {0}", commandType);
             }
 
             command.Connection = connection;
             command.CommandText = query;
             command.CommandType = CommandType.Text;
 
-            foreach (IDataParameter p in parameters)
+            foreach (var p in parameters)
             {
                 command.Parameters.Add(p);
             }
@@ -65,10 +72,10 @@ namespace MiataLibrary.Oracle
             IEnumerable<TRowType> results = null;
             try
             {
-                OracleDataReader reader = (OracleDataReader)cursor.GetDataReader();
+                var reader = (OracleDataReader)cursor.GetDataReader();
                 try
                 {
-                    BaseTranslator<TRowType> oTranslator = new BaseTranslator<TRowType>();
+                    var oTranslator = new BaseTranslator<TRowType>();
                     results = oTranslator.ParseReader(reader);
                 }
                 catch (Exception e)
@@ -96,12 +103,12 @@ namespace MiataLibrary.Oracle
             IEnumerable<TRowType> results = null;
             try
             {
-                BaseTranslator<TRowType> oTranslator = new BaseTranslator<TRowType>();
+                var oTranslator = new BaseTranslator<TRowType>();
                 results = oTranslator.ParseReader(reader);
             }
             catch (Exception e)
             {
-                log.Error(e.Message, e);
+                log.Error(m => m(e.Message), e);
                 throw e;
             }
             finally
@@ -119,7 +126,7 @@ namespace MiataLibrary.Oracle
             dynamic expando = new ExpandoObject();
             var expandoDict = expando as IDictionary<String, object>;
 
-            List<OracleParameter> outParameters = new List<OracleParameter>();
+            var outParameters = new HashSet<OracleParameter>();
             foreach (OracleParameter p in cmd.Parameters)
             {
                 if (!p.Direction.Equals(ParameterDirection.Input))
@@ -130,9 +137,9 @@ namespace MiataLibrary.Oracle
 
             foreach (var item in outParameters)
             {
-                OracleParameter cmdParameter = cmd.Parameters[item.ParameterName];
-                OracleDbType cmdParameterType = cmdParameter.OracleDbType;
-                String cmdParameterName = cmdParameter.ParameterName;
+                var cmdParameter = cmd.Parameters[item.ParameterName];
+                var cmdParameterType = cmdParameter.OracleDbType;
+                var cmdParameterName = cmdParameter.ParameterName;
                 if (OracleDbType.RefCursor.Equals(cmdParameterType))
                 {
                     using (OracleRefCursor cursor = (OracleRefCursor)cmdParameter.Value)
@@ -156,7 +163,7 @@ namespace MiataLibrary.Oracle
             dynamic expando = new ExpandoObject();
             var expandoDict = expando as IDictionary<String, object>;
 
-            List<OracleParameter> outParameters = new List<OracleParameter>();
+            var outParameters = new HashSet<OracleParameter>();
             foreach (OracleParameter p in cmd.Parameters)
             {
                 if (!p.Direction.Equals(ParameterDirection.Input))
@@ -167,9 +174,9 @@ namespace MiataLibrary.Oracle
 
             foreach (var item in outParameters)
             {
-                OracleParameter cmdParameter = cmd.Parameters[item.ParameterName];
-                OracleDbType cmdParameterType = cmdParameter.OracleDbType;
-                String cmdParameterName = cmdParameter.ParameterName;
+                var cmdParameter = cmd.Parameters[item.ParameterName];
+                var cmdParameterType = cmdParameter.OracleDbType;
+                var cmdParameterName = cmdParameter.ParameterName;
                 if (OracleDbType.RefCursor.Equals(cmdParameterType))
                 {
                     using (OracleRefCursor cursor = (OracleRefCursor)cmdParameter.Value)

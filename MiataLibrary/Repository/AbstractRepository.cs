@@ -12,7 +12,7 @@ namespace Miata.Library.Repository
 	public abstract class AbstractRepository<T> : IRepository<T>, IDisposable
 	{
 		// Logging instance
-		private static readonly ILog log = LogManager.GetLogger(typeof(AbstractRepository<T>));
+		private readonly ILog log = LogManager.GetLogger(typeof(AbstractRepository<T>));
 
 		protected IDbConnection DbConnection { get; set; }
 
@@ -52,13 +52,13 @@ namespace Miata.Library.Repository
 		{
 			TCom command = ObjectFactory<TCom>.CreateObject();
 			
-			log.InfoFormat("Creating Command of Type: {0}", typeof(TCom));
+			log.Info(m => m("Creating Command of Type: {0}", typeof(TCom)));
 			 
 			command.Connection = connection;
 			command.CommandText = query;
 			command.CommandType = CommandType.Text;
 			
-			foreach (IDataParameter p in parameters)
+			foreach (var p in parameters)
 			{
 				command.Parameters.Add(p);
 			}

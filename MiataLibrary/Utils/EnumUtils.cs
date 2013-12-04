@@ -16,10 +16,10 @@ namespace Miata.Library.Utils
                 throw new ArgumentException("T must be an enumerated type");
             }
 
-            Type enumType = typeof(T);
+            var enumType = typeof(T);
 
-            Array enumValArray = Enum.GetValues(enumType);
-            List<T> enumValList = new List<T>(enumValArray.Length);
+            var enumValArray = Enum.GetValues(enumType);
+            var enumValList = new List<T>(enumValArray.Length);
 
             foreach (int val in enumValArray)
             {
@@ -38,9 +38,9 @@ namespace Miata.Library.Utils
                     enumVal = enumValList.Where<T>(c => c.ToString().Equals(value)).First<T>();
                 }
 
-                FieldInfo fi = enumVal.GetType().GetField(enumVal.ToString());
+                var fi = enumVal.GetType().GetField(enumVal.ToString());
 
-                DefaultValueAttribute[] attributes = (DefaultValueAttribute[])fi.GetCustomAttributes(typeof(DefaultValueAttribute), false);
+                var attributes = (DefaultValueAttribute[])fi.GetCustomAttributes(typeof(DefaultValueAttribute), false);
                 if (attributes != null && attributes.Length > 0)
                 {
                     return attributes[0].Value;
@@ -63,10 +63,10 @@ namespace Miata.Library.Utils
                 throw new ArgumentException("T must be an enumerated type");
             }
 
-            Type enumType = typeof(T);
+            var enumType = typeof(T);
 
-            Array enumValArray = Enum.GetValues(enumType);
-            List<T> enumValList = new List<T>(enumValArray.Length);
+            var enumValArray = Enum.GetValues(enumType);
+            var enumValList = new List<T>(enumValArray.Length);
 
             foreach (int val in enumValArray)
             {
@@ -85,9 +85,9 @@ namespace Miata.Library.Utils
                     enumVal = enumValList.Where<T>(c => c.ToString().Equals(value)).First<T>();
                 }
 
-                FieldInfo fi = enumVal.GetType().GetField(enumVal.ToString());
+                var fi = enumVal.GetType().GetField(enumVal.ToString());
 
-                DescriptionAttribute[] attributes = (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
+                var attributes = (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
 
                 if (attributes != null && attributes.Length > 0)
                 {
@@ -106,9 +106,9 @@ namespace Miata.Library.Utils
 
         public static string GetEnumDescription(Enum value)
         {
-            FieldInfo fi = value.GetType().GetField(value.ToString());
+            var fi = value.GetType().GetField(value.ToString());
 
-            DescriptionAttribute[] attributes = (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
+            var attributes = (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
 
             if (attributes != null && attributes.Length > 0)
             {
@@ -122,9 +122,9 @@ namespace Miata.Library.Utils
 
         public static object GetEnumDefaultValue(Enum value)
         {
-            FieldInfo fi = value.GetType().GetField(value.ToString());
+            var fi = value.GetType().GetField(value.ToString());
 
-            DefaultValueAttribute[] attributes = (DefaultValueAttribute[])fi.GetCustomAttributes(typeof(DefaultValueAttribute), false);
+            var attributes = (DefaultValueAttribute[])fi.GetCustomAttributes(typeof(DefaultValueAttribute), false);
 
             if (attributes != null && attributes.Length > 0)
             { return attributes[0].Value; }
@@ -134,7 +134,7 @@ namespace Miata.Library.Utils
 
         public static IEnumerable<Enum> EnumToList(Enum enumType)
         {
-            Type type = enumType.GetType();
+            var type = enumType.GetType();
             return EnumUtils.EnumToList(type);
         }
 
@@ -149,8 +149,8 @@ namespace Miata.Library.Utils
                 throw new ArgumentException("T must be of type System.Enum");
             }
 
-            Array enumValArray = Enum.GetValues(type);
-            List<Enum> enumValList = new List<Enum>(enumValArray.Length);
+            var enumValArray = Enum.GetValues(type);
+            var enumValList = new List<Enum>(enumValArray.Length);
 
             foreach (int val in enumValArray)
             {
@@ -162,7 +162,7 @@ namespace Miata.Library.Utils
 
         public static IEnumerable<T> EnumToList<T>()
         {
-            Type type = typeof(T);
+            var type = typeof(T);
 
             // Can't use generic type constraints on value types,
             // so have to do check like this
@@ -171,8 +171,8 @@ namespace Miata.Library.Utils
                 throw new ArgumentException("T must be of type System.Enum");
             }
 
-            Array enumValArray = Enum.GetValues(type);
-            List<T> enumValList = new List<T>(enumValArray.Length);
+            var enumValArray = Enum.GetValues(type);
+            var enumValList = new List<T>(enumValArray.Length);
 
             foreach (int val in enumValArray)
             {
