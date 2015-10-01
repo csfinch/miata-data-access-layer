@@ -1,0 +1,1 @@
+A C# data access layer which works with POCOs and oracle REF CURSORS.
